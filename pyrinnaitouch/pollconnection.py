@@ -1,3 +1,10 @@
+"""
+This change inserts a delay between disconnect/reconnect to allow the Touch unit time to reset.
+The time may need to be longer to allow for different environments.
+
+Perhaps a more correct change would be to clear everything and wait for the UDP broadcast before proceeding?
+"""
+
 """Handle connectivity with non-blocking sockets and connection reporting."""
 
 from collections import defaultdict
@@ -43,6 +50,7 @@ class RinnaiPollConnection:  # pylint: disable=too-many-instance-attributes
         self._command_timeout_seconds = 10
         self._hello_received = False
         self._last_received_sequence_num = 0
+        self._connection_reconnect_delay_seconds = 1
 
         RinnaiPollConnection.clients[ip_address] += 1
         if RinnaiPollConnection.clients[ip_address] > 1:
@@ -356,6 +364,7 @@ class RinnaiPollConnection:  # pylint: disable=too-many-instance-attributes
                 self._update_socket_state(RinnaiConnectionState.ERROR)
 
     def _create_socket_and_connect(self) -> None:
+        time.sleep(self._connection_reconnect_delay_seconds)
         self._update_socket_state(RinnaiConnectionState.CONNECTING)
 
         # If an old socket exists, try and clean it up.
