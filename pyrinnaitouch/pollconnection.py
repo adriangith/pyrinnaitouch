@@ -1,4 +1,8 @@
 """
+This change inserts a delay between disconnect/reconnect to allow the Touch unit time to reset.
+The time may need to be longer to allow for different environments.
+
+Perhaps a more correct change would be to clear everything and wait for the UDP broadcast before proceeding?
 This change includes two aspects, a self._command_wait status with timeout between commands, and sequence numbering for idle commands.
 If this is too much a simplerfix is to insert a delay between all messages, eg.
     while True:
@@ -52,6 +56,7 @@ class RinnaiPollConnection:  # pylint: disable=too-many-instance-attributes
         self._command_timeout_seconds = 10
         self._hello_received = False
         self._last_received_sequence_num = 0
+        self._connection_reconnect_delay_seconds = 1
         self._command_wait = False
         self._command_wait_timeout_seconds = 5
 
@@ -380,6 +385,7 @@ class RinnaiPollConnection:  # pylint: disable=too-many-instance-attributes
                 self._update_socket_state(RinnaiConnectionState.ERROR)
 
     def _create_socket_and_connect(self) -> None:
+        time.sleep(self._connection_reconnect_delay_seconds)
         self._update_socket_state(RinnaiConnectionState.CONNECTING)
 
         # If an old socket exists, try and clean it up.
